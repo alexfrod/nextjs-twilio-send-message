@@ -1,26 +1,38 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
-import { BaseSyntheticEvent, useState } from 'react';
+import { BaseSyntheticEvent, useEffect, useState } from 'react';
 
 const Home: NextPage = () => {
-  const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [getSuccess, setGetSuccess] = useState(false);
   const [error, setError] = useState(false);
+  const [getError, setGetError] = useState(false);
+  const [numbers, setNumbers] = useState<Array<string>>([]);
 
+  useEffect(() => {
+    const temp = async () => {
+        const tempNumbers = await getPhoneNumbers();
+    }
+    
+    temp().catch((err) => {
+        console.log(err);
+    })
+  }, [])
+  
   const sendMessage = async (e: BaseSyntheticEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(false);
-    setSuccess(false);
+    setSuccess(false);    
     const res = await fetch('/api/sendMessage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ phone: phone, message: message }),
+      body: JSON.stringify({ phoneNumbers: numbers, text: message }),
     });
     const apiResponse = await res.json();
 
@@ -31,6 +43,30 @@ const Home: NextPage = () => {
     }
     setLoading(false);
   };
+  
+  const getPhoneNumbers = async () => {
+    setLoading(true);
+    setGetError(false);
+    setGetSuccess(false);
+    const res = await fetch('/api/getPhoneNumbers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ }),
+    });
+    const apiResponse = await res.json();
+
+    if (apiResponse.success) {
+      setGetSuccess(true);
+      setNumbers(apiResponse.numbers)
+    } else {
+      setGetError(true);
+    }
+    setLoading(false);
+  };
+  
+  
   return (
     <div className={styles.container}>
       <Head>
@@ -40,13 +76,19 @@ const Home: NextPage = () => {
       <form className={styles.form} onSubmit={sendMessage}>
         <h1 className={styles.title}>Send message using Next.js and Twilio</h1>
         <div className={styles.formGroup}>
-          <label htmlFor='phone'>Phone Number</label>
-          <input
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder='Phone Number'
-            className={styles.input}
-            required
-          />
+          <label htmlFor='phone'>Phone Numbers</label>
+          {numbers.map((number) => { return (
+            <span key={number}>{number}</span>
+          )
+          })}
+          {getSuccess && (
+              <p className={styles.success}>Numbers got.</p>
+          )}
+          {getError && (
+              <p className={styles.error}>
+                Something went wrong getting numbers.
+              </p>
+          )}
         </div>
         <div className={styles.formGroup}>
           <label htmlFor='message'>Message</label>
