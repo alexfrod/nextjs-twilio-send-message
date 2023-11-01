@@ -35,7 +35,7 @@ const Home: NextPage = () => {
       body: JSON.stringify({ phoneNumbers: numbers, text: message }),
     });
     const apiResponse = await res.json();
-
+    
     if (apiResponse.success) {
       setSuccess(true);
     } else {
